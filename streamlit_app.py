@@ -31,6 +31,8 @@ def main():
         st.session_state.current_word = ""
     if "round_active" not in st.session_state:
         st.session_state.round_active = False
+    if "all_results" not in st.session_state:
+        st.session_state.all_results = []
 
     if st.button("Reiniciar"):
         for key in st.session_state.keys():
@@ -101,6 +103,7 @@ def main():
             else:
                 st.write("¡Tiempo terminado!")
                 st.session_state.round_active = False
+                st.session_state.all_results.append((st.session_state.teams[st.session_state.current_team], st.session_state.results))
                 summarize_round()
 
     if not st.session_state.round_active and st.session_state.game_active and "current_word" in st.session_state:
@@ -121,6 +124,7 @@ def main():
         else:
             st.write("El juego ha terminado.")
             st.session_state.game_active = False
+            display_final_summary()
 
 def start_round():
     if st.session_state.current_word_index < len(st.session_state.words):
@@ -143,6 +147,17 @@ def summarize_round():
         st.write(f"Palabra: {result['word']}, Resultado: {result['result']}")
     total_correct = sum(1 for result in st.session_state.results if result['result'] == "Correcto")
     st.write(f"Puntos Totales: {total_correct}")
+
+def display_final_summary():
+    st.write("Resumen Final del Juego")
+    all_results = []
+    for team, results in st.session_state.all_results:
+        correct_words = [result['word'] for result in results if result['result'] == "Correcto"]
+        skipped_words = [result['word'] for result in results if result['result'] == "Saltar"]
+        all_results.append({"Equipo": team, "Correctas": len(correct_words), "Saltadas": len(skipped_words)})
+
+    df = pd.DataFrame(all_results)
+    st.table(df)
 
 if __name__ == "__main__":
     main()
