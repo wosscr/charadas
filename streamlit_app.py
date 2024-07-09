@@ -11,7 +11,7 @@ def main():
         st.session_state.teams = []
     if "current_team" not in st.session_state:
         st.session_state.current_team = 0
-    if "palabras" not in st.session_state:
+    if "words" not in st.session_state:
         st.session_state.words = []
     if "current_word_index" not in st.session_state:
         st.session_state.current_word_index = 0
@@ -40,8 +40,8 @@ def main():
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        if "palabras" in df.columns:
-            st.session_state.words = df["palabras"].tolist()
+        if "words" in df.columns:
+            st.session_state.words = df["words"].tolist()
             st.success("Palabras o frases cargadas con éxito")
         else:
             st.error("El archivo CSV debe contener una columna llamada 'words'")
@@ -80,7 +80,10 @@ def main():
         if st.session_state.timer_end:
             time_left = int(st.session_state.timer_end - time.time())
             st.write(f"Tiempo restante: {time_left} segundos")
-            if time_left <= 0:
+            if time_left > 0:
+                time.sleep(1)
+                st.experimental_rerun()
+            else:
                 st.write("¡Tiempo terminado!")
                 st.session_state.game_active = False
                 summarize_round()
