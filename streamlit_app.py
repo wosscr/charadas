@@ -21,6 +21,8 @@ def main():
         st.session_state.timer_end = None
     if "game_active" not in st.session_state:
         st.session_state.game_active = False
+    if "time_left" not in st.session_state:
+        st.session_state.time_left = 0
 
     st.header("Crear Equipos")
     num_teams = st.number_input("Número de equipos", min_value=2, value=2, step=1)
@@ -59,6 +61,7 @@ def main():
             st.session_state.results = []
             st.session_state.current_team = 0
             st.session_state.timer_end = time.time() + round_time * 60
+            st.session_state.time_left = round_time * 60
             st.session_state.game_active = True
             start_round()
 
@@ -76,15 +79,17 @@ def main():
 
         # Display the countdown timer
         if st.session_state.timer_end:
-            time_left = int(st.session_state.timer_end - time.time())
-            st.write(f"Tiempo restante: {time_left} segundos")
-            if time_left > 0:
+            st.session_state.time_left = int(st.session_state.timer_end - time.time())
+            st.write(f"Tiempo restante: {st.session_state.time_left} segundos")
+            if st.session_state.time_left > 0:
                 time.sleep(1)
                 st.experimental_rerun()
             else:
                 st.write("¡Tiempo terminado!")
                 st.session_state.game_active = False
                 summarize_round()
+    elif not st.session_state.game_active and "current_word" in st.session_state:
+        summarize_round()
 
 def start_round():
     if st.session_state.current_word_index < len(st.session_state.words):
