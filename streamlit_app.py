@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import random
 import time
-from streamlit_autorefresh import st_autorefresh
 
 def main():
     st.title("Juego de Charadas")
@@ -20,6 +19,8 @@ def main():
         st.session_state.results = []
     if "timer_end" not in st.session_state:
         st.session_state.timer_end = None
+    if "game_active" not in st.session_state:
+        st.session_state.game_active = False
 
     st.header("Crear Equipos")
     num_teams = st.number_input("Número de equipos", min_value=2, value=2, step=1)
@@ -58,11 +59,12 @@ def main():
             st.session_state.results = []
             st.session_state.current_team = 0
             st.session_state.timer_end = time.time() + round_time * 60
+            st.session_state.game_active = True
             start_round()
 
     # Placeholder for further steps
     st.header("Juego en Progreso")
-    if "current_word" in st.session_state:
+    if st.session_state.game_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
         st.write(f"Palabra: {st.session_state.current_word}")
         if st.button("Saltar"):
@@ -80,6 +82,7 @@ def main():
             st.write(f"Tiempo restante: {time_left} segundos")
             if time_left <= 0:
                 st.write("¡Tiempo terminado!")
+                st.session_state.game_active = False
                 summarize_round()
 
 def start_round():
@@ -91,6 +94,7 @@ def next_word():
         st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
     else:
         st.write("No quedan más palabras. Fin del juego.")
+        st.session_state.game_active = False
         summarize_round()
 
 def summarize_round():
@@ -101,6 +105,4 @@ def summarize_round():
     st.write(f"Puntos Totales: {total_correct}")
 
 if __name__ == "__main__":
-    # Auto-refresh the page every second to update the timer
-    st_autorefresh(interval=1000, limit=10000)
     main()
