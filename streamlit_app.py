@@ -23,19 +23,21 @@ def main():
         st.session_state.game_active = False
     if "time_left" not in st.session_state:
         st.session_state.time_left = 0
-    if "configured" not in st.session_state:
-        st.session_state.configured = False
+    if "teams_configured" not in st.session_state:
+        st.session_state.teams_configured = False
+    if "words_uploaded" not in st.session_state:
+        st.session_state.words_uploaded = False
 
-    if st.button("Reset"):
+    if st.button("Reiniciar"):
         st.session_state.clear()
         st.experimental_rerun()
 
     st.header("Crear Equipos")
-    num_teams = st.number_input("Número de equipos", min_value=2, value=2, step=1, disabled=st.session_state.configured)
+    num_teams = st.number_input("Número de equipos", min_value=2, value=2, step=1, disabled=st.session_state.teams_configured)
 
-    if st.button("Crear Equipos", disabled=st.session_state.configured):
+    if st.button("Crear Equipos", disabled=st.session_state.teams_configured):
         st.session_state.teams = [f"Equipo {i+1}" for i in range(num_teams)]
-        st.session_state.configured = True
+        st.session_state.teams_configured = True
         st.success("Equipos creados con éxito")
 
     st.header("Equipos")
@@ -45,13 +47,13 @@ def main():
 
     # Load words/phrases
     st.header("Cargar Palabras o Frases")
-    uploaded_file = st.file_uploader("Sube un archivo CSV con palabras o frases", type=["csv"], disabled=st.session_state.configured)
+    uploaded_file = st.file_uploader("Sube un archivo CSV con palabras o frases", type=["csv"], disabled=st.session_state.words_uploaded)
 
-    if uploaded_file is not None and not st.session_state.configured:
+    if uploaded_file is not None and not st.session_state.words_uploaded:
         df = pd.read_csv(uploaded_file)
         if "words" in df.columns:
             st.session_state.words = df["words"].tolist()
-            st.session_state.configured = True
+            st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
             st.error("El archivo CSV debe contener una columna llamada 'words'")
@@ -61,17 +63,14 @@ def main():
     round_time = st.number_input("Tiempo por ronda (minutos)", min_value=1, value=1, step=1)
 
     # Start game
-    if st.button("Comenzar Juego"):
-        if not st.session_state.words:
-            st.error("Debes cargar una lista de palabras o frases antes de comenzar el juego.")
-        else:
-            st.session_state.current_word_index = 0
-            st.session_state.results = []
-            st.session_state.current_team = 0
-            st.session_state.timer_end = time.time() + round_time * 60
-            st.session_state.time_left = round_time * 60
-            st.session_state.game_active = True
-            start_round()
+    if st.button("Comenzar Juego", disabled=not (st.session_state.teams_configured and st.session_state.words_uploaded)):
+        st.session_state.current_word_index = 0
+        st.session_state.results = []
+        st.session_state.current_team = 0
+        st.session_state.timer_end = time.time() + round_time * 60
+        st.session_state.time_left = round_time * 60
+        st.session_state.game_active = True
+        start_round()
 
     # Placeholder for further steps
     st.header("Juego en Progreso")
