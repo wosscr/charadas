@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 import time
+from streamlit_autorefresh import st_autorefresh
 
 def main():
     st.title("Juego de Charadas")
@@ -17,6 +18,8 @@ def main():
         st.session_state.current_word_index = 0
     if "results" not in st.session_state:
         st.session_state.results = []
+    if "timer_end" not in st.session_state:
+        st.session_state.timer_end = None
 
     st.header("Crear Equipos")
     num_teams = st.number_input("Número de equipos", min_value=2, value=2, step=1)
@@ -36,8 +39,8 @@ def main():
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        if "palabras" in df.columns:
-            st.session_state.words = df["palabras"].tolist()
+        if "words" in df.columns:
+            st.session_state.words = df["words"].tolist()
             st.success("Palabras o frases cargadas con éxito")
         else:
             st.error("El archivo CSV debe contener una columna llamada 'words'")
@@ -54,7 +57,8 @@ def main():
             st.session_state.current_word_index = 0
             st.session_state.results = []
             st.session_state.current_team = 0
-            start_round(round_time)
+            st.session_state.timer_end = time.time() + round_time * 60
+            start_round()
 
     # Placeholder for further steps
     st.header("Juego en Progreso")
@@ -70,15 +74,16 @@ def main():
         if st.session_state.current_word_index >= len(st.session_state.words):
             st.write("No quedan más palabras. Fin del juego.")
 
-def start_round(round_time):
+        # Display the countdown timer
+        if st.session_state.timer_end:
+            time_left = int(st.session_state.timer_end - time.time())
+            st.write(f"Tiempo restante: {time_left} segundos")
+            if time_left <= 0:
+                st.write("¡Tiempo terminado!")
+                summarize_round()
+
+def start_round():
     st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
-    end_time = time.time() + round_time * 60
-    while time.time() < end_time:
-        time_left = end_time - time.time()
-        st.write(f"Tiempo restante: {int(time_left)} segundos")
-        time.sleep(1)
-    st.write("¡Tiempo terminado!")
-    summarize_round()
 
 def next_word():
     st.session_state.current_word_index += 1
@@ -96,4 +101,6 @@ def summarize_round():
     st.write(f"Puntos Totales: {total_correct}")
 
 if __name__ == "__main__":
+    # Auto-refresh the page every second to update the timer
+    st_autorefresh(interval=1000, limit=10000)
     main()
