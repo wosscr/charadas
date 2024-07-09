@@ -26,8 +26,8 @@ def main():
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        if "words" in df.columns:
-            st.session_state.words = df["words"].tolist()
+        if "palabras" in df.columns:
+            st.session_state.words = df["palabras"].tolist()
             st.success("Palabras o frases cargadas con éxito")
         else:
             st.error("El archivo CSV debe contener una columna llamada 'words'")
