@@ -33,7 +33,8 @@ def main():
         st.session_state.round_active = False
 
     if st.button("Reiniciar"):
-        st.session_state.clear()
+        for key in st.session_state.keys():
+            del st.session_state[key]
         st.experimental_rerun()
 
     st.header("Crear Equipos")
@@ -106,17 +107,17 @@ def main():
         summarize_round()
 
     # Button to start the next team's round
-    if not st.session_state.round_active and not st.session_state.game_active and st.session_state.teams_configured and st.session_state.words_uploaded:
-        if st.button("Siguiente Equipo"):
-            st.session_state.current_team += 1
-            if st.session_state.current_team < len(st.session_state.teams):
+    if not st.session_state.round_active and st.session_state.game_active and st.session_state.teams_configured and st.session_state.words_uploaded:
+        if st.session_state.current_team < len(st.session_state.teams) - 1:
+            if st.button("Siguiente Equipo"):
+                st.session_state.current_team += 1
                 st.session_state.timer_end = time.time() + round_time * 60
                 st.session_state.time_left = round_time * 60
                 st.session_state.round_active = True
                 start_round()
-            else:
-                st.write("El juego ha terminado.")
-                st.session_state.game_active = False
+        else:
+            st.write("El juego ha terminado.")
+            st.session_state.game_active = False
 
 def start_round():
     if st.session_state.current_word_index < len(st.session_state.words):
