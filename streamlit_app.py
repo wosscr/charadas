@@ -73,8 +73,6 @@ def main():
         if st.button("Correcto"):
             st.session_state.results.append({"word": st.session_state.current_word, "result": "Correcto"})
             next_word()
-        if st.session_state.current_word_index >= len(st.session_state.words):
-            st.write("No quedan más palabras. Fin del juego.")
 
         # Display the countdown timer
         if st.session_state.timer_end:
@@ -89,14 +87,17 @@ def main():
                 summarize_round()
 
 def start_round():
-    st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
+    if st.session_state.current_word_index < len(st.session_state.words):
+        st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
+    else:
+        st.session_state.game_active = False
+        summarize_round()
 
 def next_word():
     st.session_state.current_word_index += 1
     if st.session_state.current_word_index < len(st.session_state.words):
         st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
     else:
-        st.write("No quedan más palabras. Fin del juego.")
         st.session_state.game_active = False
         summarize_round()
 
