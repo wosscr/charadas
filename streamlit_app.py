@@ -6,7 +6,7 @@ import time
 def main():
     st.title("Juego de Charadas")
 
-    # Create teams
+    # Initialize session state variables
     if "teams" not in st.session_state:
         st.session_state.teams = []
     if "current_team" not in st.session_state:
@@ -27,6 +27,10 @@ def main():
         st.session_state.teams_configured = False
     if "words_uploaded" not in st.session_state:
         st.session_state.words_uploaded = False
+    if "current_word" not in st.session_state:
+        st.session_state.current_word = ""
+    if "round_active" not in st.session_state:
+        st.session_state.round_active = False
 
     if st.button("Reiniciar"):
         st.session_state.clear()
@@ -53,6 +57,7 @@ def main():
         df = pd.read_csv(uploaded_file)
         if "words" in df.columns:
             st.session_state.words = df["words"].tolist()
+            random.shuffle(st.session_state.words)  # Shuffle words
             st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
@@ -63,18 +68,19 @@ def main():
     round_time = st.number_input("Tiempo por ronda (minutos)", min_value=1, value=1, step=1)
 
     # Start game
-    if st.button("Comenzar Juego", disabled=not (st.session_state.teams_configured and st.session_state.words_uploaded)):
+    if st.button("Comenzar Juego", disabled=st.session_state.game_active or not (st.session_state.teams_configured and st.session_state.words_uploaded)):
         st.session_state.current_word_index = 0
         st.session_state.results = []
         st.session_state.current_team = 0
         st.session_state.timer_end = time.time() + round_time * 60
         st.session_state.time_left = round_time * 60
         st.session_state.game_active = True
+        st.session_state.round_active = True
         start_round()
 
     # Placeholder for further steps
     st.header("Juego en Progreso")
-    if st.session_state.game_active and "current_word" in st.session_state:
+    if st.session_state.round_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
         st.write(f"Palabra: {st.session_state.current_word}")
         if st.button("Saltar"):
@@ -93,16 +99,30 @@ def main():
                 st.experimental_rerun()
             else:
                 st.write("¡Tiempo terminado!")
-                st.session_state.game_active = False
+                st.session_state.round_active = False
                 summarize_round()
-    elif not st.session_state.game_active and "current_word" in st.session_state:
+
+    if not st.session_state.round_active and st.session_state.game_active and "current_word" in st.session_state:
         summarize_round()
+
+    # Button to start the next team's round
+    if not st.session_state.round_active and not st.session_state.game_active and st.session_state.teams_configured and st.session_state.words_uploaded:
+        if st.button("Siguiente Equipo"):
+            st.session_state.current_team += 1
+            if st.session_state.current_team < len(st.session_state.teams):
+                st.session_state.timer_end = time.time() + round_time * 60
+                st.session_state.time_left = round_time * 60
+                st.session_state.round_active = True
+                start_round()
+            else:
+                st.write("El juego ha terminado.")
+                st.session_state.game_active = False
 
 def start_round():
     if st.session_state.current_word_index < len(st.session_state.words):
         st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
     else:
-        st.session_state.game_active = False
+        st.session_state.round_active = False
         summarize_round()
 
 def next_word():
@@ -110,7 +130,7 @@ def next_word():
     if st.session_state.current_word_index < len(st.session_state.words):
         st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
     else:
-        st.session_state.game_active = False
+        st.session_state.round_active = False
         summarize_round()
 
 def summarize_round():
