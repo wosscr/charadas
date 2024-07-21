@@ -52,13 +52,13 @@ def main():
 
     if uploaded_file is not None and not st.session_state.get("words_uploaded", False):
         df = pd.read_csv(uploaded_file)
-        if "Palabra" in df.columns and "Categoria" in df.columns:
+        if "Palabra/Frase" in df.columns and "Categoria" in df.columns:
             st.session_state.words = df.to_dict('records')
             random.shuffle(st.session_state.words)  # Shuffle words
             st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
-            st.error("El archivo CSV debe contener las columnas 'Palabra' y 'Categoria'")
+            st.error("El archivo CSV debe contener las columnas 'Palabra/Frase' y 'Categoria'")
 
     # Set timer
     st.header("Configuraciones del Juego")
@@ -79,12 +79,12 @@ def main():
     st.header("Juego en Progreso")
     if st.session_state.round_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
-        st.write(f"Palabra: {st.session_state.current_word['Palabra']} (Categoría: {st.session_state.current_word['Categoria']})")
+        st.write(f"Palabra/Frase: {st.session_state.current_word['Palabra/Frase']} (Categoría: {st.session_state.current_word['Categoria']})")
         if st.button("Saltar"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Saltar"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Saltar"})
             next_word()
         if st.button("Correcto"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Correcto"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Correcto"})
             next_word()
 
         # Display the countdown timer using Streamlit's st.empty
@@ -102,7 +102,8 @@ def main():
                 st.session_state.round_active = False
                 end_round()
 
-    if not st.session_state.round_active and st.session_state.game_active and "current_word" in st.session_state:
+    if not st.session_state.round_active and st.session_state.game_active and not st.session_state.get("round_ended", False):
+        st.session_state.round_ended = True
         summarize_round()
 
     # Button to start the next team's round
@@ -114,6 +115,7 @@ def main():
                 st.session_state.results = []  # Reset results for next team
                 st.session_state.round_active = True
                 st.session_state.timer_start = time.time()
+                st.session_state.round_ended = False
                 start_round()
         else:
             st.write("El juego ha terminado.")
