@@ -31,6 +31,8 @@ def main():
         st.session_state.round_ended = False
     if "shuffled_words" not in st.session_state:
         st.session_state.shuffled_words = []
+    if "summary_displayed" not in st.session_state:
+        st.session_state.summary_displayed = False
 
     if st.button("Reiniciar"):
         for key in st.session_state.keys():
@@ -77,6 +79,7 @@ def main():
         st.session_state.round_active = True
         st.session_state.timer_start = time.time()
         st.session_state.shuffled_words = random.sample(st.session_state.words, len(st.session_state.words))
+        st.session_state.summary_displayed = False
         start_round()
 
     # Placeholder for further steps
@@ -133,7 +136,7 @@ def start_round():
         st.session_state.current_word = st.session_state.shuffled_words[st.session_state.current_word_index]
     else:
         st.session_state.round_active = False
-        summarize_round()
+        end_round()
 
 def next_word():
     st.session_state.current_word_index += 1
@@ -141,15 +144,16 @@ def next_word():
         st.session_state.current_word = st.session_state.shuffled_words[st.session_state.current_word_index]
     else:
         st.session_state.round_active = False
-        summarize_round()
+        end_round()
 
 def end_round():
     st.session_state.round_active = False
     st.session_state.all_results.append((st.session_state.teams[st.session_state.current_team], st.session_state.results))
+    st.session_state.summary_displayed = False
     summarize_round()
 
 def summarize_round():
-    if not st.session_state.get("summary_displayed", False):
+    if not st.session_state.summary_displayed:
         st.session_state.summary_displayed = True
         st.write("Resumen de la Ronda")
         for result in st.session_state.results:
@@ -167,6 +171,11 @@ def display_final_summary():
 
     df = pd.DataFrame(all_results)
     st.table(df)
+
+    # Hide "Saltar" and "Correcto" buttons when the game ends
+    if not st.session_state.round_active:
+        st.button("Saltar", disabled=True)
+        st.button("Correcto", disabled=True)
 
 if __name__ == "__main__":
     main()
