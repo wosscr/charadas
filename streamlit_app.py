@@ -56,7 +56,7 @@ def main():
             st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
-            st.error("El archivo CSV debe contener las columnas 'Palabra/Frase' y 'Categoria'")
+            st.error("El archivo CSV debe contener las columnas 'Palabra' y 'Categoria'")
 
     # Set timer
     st.header("Configuraciones del Juego")
@@ -76,12 +76,12 @@ def main():
     st.header("Juego en Progreso")
     if st.session_state.round_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
-        st.write(f"Palabra/Frase: {st.session_state.current_word['Palabra/Frase']} (Categoría: {st.session_state.current_word['Categoria']})")
+        st.write(f"Palabra: {st.session_state.current_word['Palabra']} (Categoría: {st.session_state.current_word['Categoria']})")
         if st.button("Saltar"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Saltar"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Saltar"})
             next_word()
         if st.button("Correcto"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Correcto"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Correcto"})
             next_word()
 
         # Display the countdown timer using JavaScript
