@@ -27,6 +27,10 @@ def main():
         st.session_state.round_time = 0
     if "timer_start" not in st.session_state:
         st.session_state.timer_start = 0
+    if "round_ended" not in st.session_state:
+        st.session_state.round_ended = False
+    if "shuffled_words" not in st.session_state:
+        st.session_state.shuffled_words = []
 
     if st.button("Reiniciar"):
         for key in st.session_state.keys():
@@ -54,7 +58,6 @@ def main():
         df = pd.read_csv(uploaded_file)
         if "Palabra" in df.columns and "Categoria" in df.columns:
             st.session_state.words = df.to_dict('records')
-            random.shuffle(st.session_state.words)  # Shuffle words
             st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
@@ -73,6 +76,7 @@ def main():
         st.session_state.game_active = True
         st.session_state.round_active = True
         st.session_state.timer_start = time.time()
+        st.session_state.shuffled_words = random.sample(st.session_state.words, len(st.session_state.words))
         start_round()
 
     # Placeholder for further steps
@@ -102,7 +106,7 @@ def main():
                 st.session_state.round_active = False
                 end_round()
 
-    if not st.session_state.round_active and st.session_state.game_active and not st.session_state.get("round_ended", False):
+    if not st.session_state.round_active and st.session_state.game_active and not st.session_state.round_ended:
         st.session_state.round_ended = True
         summarize_round()
 
@@ -116,23 +120,25 @@ def main():
                 st.session_state.round_active = True
                 st.session_state.timer_start = time.time()
                 st.session_state.round_ended = False
+                st.session_state.shuffled_words = random.sample(st.session_state.words, len(st.session_state.words))  # Shuffle words for the next team
                 start_round()
+                st.experimental_rerun()  # Force rerun to update the state
         else:
             st.write("El juego ha terminado.")
             st.session_state.game_active = False
             display_final_summary()
 
 def start_round():
-    if st.session_state.current_word_index < len(st.session_state.words):
-        st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
+    if st.session_state.current_word_index < len(st.session_state.shuffled_words):
+        st.session_state.current_word = st.session_state.shuffled_words[st.session_state.current_word_index]
     else:
         st.session_state.round_active = False
         summarize_round()
 
 def next_word():
     st.session_state.current_word_index += 1
-    if st.session_state.current_word_index < len(st.session_state.words):
-        st.session_state.current_word = st.session_state.words[st.session_state.current_word_index]
+    if st.session_state.current_word_index < len(st.session_state.shuffled_words):
+        st.session_state.current_word = st.session_state.shuffled_words[st.session_state.current_word_index]
     else:
         st.session_state.round_active = False
         summarize_round()
@@ -143,11 +149,13 @@ def end_round():
     summarize_round()
 
 def summarize_round():
-    st.write("Resumen de la Ronda")
-    for result in st.session_state.results:
-        st.write(f"Palabra: {result['word']}, Resultado: {result['result']}")
-    total_correct = sum(1 for result in st.session_state.results if result['result'] == "Correcto")
-    st.write(f"Puntos Totales: {total_correct}")
+    if not st.session_state.get("summary_displayed", False):
+        st.session_state.summary_displayed = True
+        st.write("Resumen de la Ronda")
+        for result in st.session_state.results:
+            st.write(f"Palabra: {result['word']}, Resultado: {result['result']}")
+        total_correct = sum(1 for result in st.session_state.results if result['result'] == "Correcto")
+        st.write(f"Puntos Totales: {total_correct}")
 
 def display_final_summary():
     st.write("Resumen Final del Juego")
