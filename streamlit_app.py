@@ -50,7 +50,7 @@ def main():
 
     if uploaded_file is not None and not st.session_state.get("words_uploaded", False):
         df = pd.read_csv(uploaded_file)
-        if "Palabra/Frase" in df.columns and "Categoria" in df.columns:
+        if "Palabra" in df.columns and "Categoria" in df.columns:
             st.session_state.words = df.to_dict('records')
             random.shuffle(st.session_state.words)  # Shuffle words
             st.session_state.words_uploaded = True
