@@ -25,6 +25,8 @@ def main():
         st.session_state.all_results = []
     if "round_time" not in st.session_state:
         st.session_state.round_time = 0
+    if "timer_start" not in st.session_state:
+        st.session_state.timer_start = 0
 
     if st.button("Reiniciar"):
         for key in st.session_state.keys():
@@ -50,13 +52,13 @@ def main():
 
     if uploaded_file is not None and not st.session_state.get("words_uploaded", False):
         df = pd.read_csv(uploaded_file)
-        if "Palabra" in df.columns and "Categoria" in df.columns:
+        if "Palabra/Frase" in df.columns and "Categoria" in df.columns:
             st.session_state.words = df.to_dict('records')
             random.shuffle(st.session_state.words)  # Shuffle words
             st.session_state.words_uploaded = True
             st.success("Palabras o frases cargadas con éxito")
         else:
-            st.error("El archivo CSV debe contener las columnas 'Palabra' y 'Categoria'")
+            st.error("El archivo CSV debe contener las columnas 'Palabra/Frase' y 'Categoria'")
 
     # Set timer
     st.header("Configuraciones del Juego")
@@ -70,45 +72,35 @@ def main():
         st.session_state.current_team = 0
         st.session_state.game_active = True
         st.session_state.round_active = True
+        st.session_state.timer_start = time.time()
         start_round()
 
     # Placeholder for further steps
     st.header("Juego en Progreso")
     if st.session_state.round_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
-        st.write(f"Palabra: {st.session_state.current_word['Palabra']} (Categoría: {st.session_state.current_word['Categoria']})")
+        st.write(f"Palabra/Frase: {st.session_state.current_word['Palabra/Frase']} (Categoría: {st.session_state.current_word['Categoria']})")
         if st.button("Saltar"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Saltar"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Saltar"})
             next_word()
         if st.button("Correcto"):
-            st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Correcto"})
+            st.session_state.results.append({"word": st.session_state.current_word['Palabra/Frase'], "result": "Correcto"})
             next_word()
 
-        # Display the countdown timer using JavaScript
-        st.write(f"<div id='timer'></div>", unsafe_allow_html=True)
-        st.write(f"""
-            <script>
-                var timer = document.getElementById('timer');
-                var timeLeft = {st.session_state.round_time * 60};
-
-                function updateTimer() {{
-                    var minutes = Math.floor(timeLeft / 60);
-                    var seconds = timeLeft % 60;
-                    timer.innerHTML = 'Tiempo restante: ' + minutes + ' minutos ' + seconds + ' segundos';
-                    if (timeLeft > 0) {{
-                        timeLeft--;
-                        setTimeout(updateTimer, 1000);
-                    }} else {{
-                        timer.innerHTML = '¡Tiempo terminado!';
-                        document.getElementById('endRound').click();
-                    }}
-                }}
-                updateTimer();
-            </script>
-        """, unsafe_allow_html=True)
-
-    # Button to end the round (hidden)
-    st.button("End Round", key="endRound", on_click=end_round, args=(round_time,), disabled=not st.session_state.round_active, use_container_width=True)
+        # Display the countdown timer using Streamlit's st.empty
+        timer_placeholder = st.empty()
+        while st.session_state.round_active:
+            elapsed_time = time.time() - st.session_state.timer_start
+            time_left = int(st.session_state.round_time * 60 - elapsed_time)
+            if time_left > 0:
+                minutes = time_left // 60
+                seconds = time_left % 60
+                timer_placeholder.markdown(f"### Tiempo restante: {minutes} minutos {seconds} segundos")
+                time.sleep(1)
+            else:
+                timer_placeholder.markdown("### ¡Tiempo terminado!")
+                st.session_state.round_active = False
+                end_round()
 
     if not st.session_state.round_active and st.session_state.game_active and "current_word" in st.session_state:
         summarize_round()
@@ -121,8 +113,8 @@ def main():
                 st.session_state.current_word_index = 0  # Reset word index for next team
                 st.session_state.results = []  # Reset results for next team
                 st.session_state.round_active = True
+                st.session_state.timer_start = time.time()
                 start_round()
-                st.experimental_rerun()  # Force rerun to update the state
         else:
             st.write("El juego ha terminado.")
             st.session_state.game_active = False
@@ -143,7 +135,7 @@ def next_word():
         st.session_state.round_active = False
         summarize_round()
 
-def end_round(round_time):
+def end_round():
     st.session_state.round_active = False
     st.session_state.all_results.append((st.session_state.teams[st.session_state.current_team], st.session_state.results))
     summarize_round()
