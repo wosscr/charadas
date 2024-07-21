@@ -87,10 +87,10 @@ def main():
     if st.session_state.round_active and "current_word" in st.session_state:
         st.write(f"Equipo Actual: {st.session_state.teams[st.session_state.current_team]}")
         st.write(f"Palabra: {st.session_state.current_word['Palabra']} (Categoría: {st.session_state.current_word['Categoria']})")
-        if st.button("Saltar"):
+        if st.button("Saltar", key="skip_button"):
             st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Saltar"})
             next_word()
-        if st.button("Correcto"):
+        if st.button("Correcto", key="correct_button"):
             st.session_state.results.append({"word": st.session_state.current_word['Palabra'], "result": "Correcto"})
             next_word()
 
@@ -173,9 +173,8 @@ def display_final_summary():
     st.table(df)
 
     # Hide "Saltar" and "Correcto" buttons when the game ends
-    if not st.session_state.round_active:
-        st.button("Saltar", disabled=True)
-        st.button("Correcto", disabled=True)
+    st.button("Saltar", disabled=True, key="disabled_skip")
+    st.button("Correcto", disabled=True, key="disabled_correct")
 
 if __name__ == "__main__":
     main()
